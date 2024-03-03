@@ -84,7 +84,14 @@ class ForegroundOnlyLocationService : Service() {
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
 
         // TODO: Step 1.3, Create a LocationRequest.
-        locationRequest = LocationRequest.create().apply {
+        locationRequest = LocationRequest.Builder(TimeUnit.SECONDS.toMillis(60)).build()  // interval
+
+        locationRequest.isWaitForAccurateLocation = true
+        locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        locationRequest.fastestInterval = TimeUnit.SECONDS.toMillis(30)
+
+
+        /*{
             // Sets the desired interval for active location updates. This interval is inexact. You
             // may not receive updates at all if no location sources are available, or you may
             // receive them less frequently than requested. You may also receive updates more
@@ -105,7 +112,9 @@ class ForegroundOnlyLocationService : Service() {
             maxWaitTime = TimeUnit.MINUTES.toMillis(2)
 
             priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        }
+
+         */
+
 
         // TODO: Step 1.4, Initialize the LocationCallback.
         locationCallback = object : LocationCallback() {
@@ -155,7 +164,7 @@ class ForegroundOnlyLocationService : Service() {
 
         // MainActivity (client) comes into foreground and binds to service, so the service can
         // become a background services.
-        stopForeground(true)
+        stopForeground(STOP_FOREGROUND_REMOVE)  // CONSULTAR QUINA CONSTANT CONVE MES.....
         serviceRunningInForeground = false
         configurationChange = false
         return localBinder
@@ -166,7 +175,7 @@ class ForegroundOnlyLocationService : Service() {
 
         // MainActivity (client) returns to the foreground and rebinds to service, so the service
         // can become a background services.
-        stopForeground(true)
+        stopForeground(STOP_FOREGROUND_REMOVE)
         serviceRunningInForeground = false
         configurationChange = false
         super.onRebind(intent)
@@ -258,16 +267,14 @@ class ForegroundOnlyLocationService : Service() {
         val titleText = getString(R.string.app_name)
 
         // 1. Create Notification Channel for O+ and beyond devices (26+).
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 
-            val notificationChannel = NotificationChannel(
-                NOTIFICATION_CHANNEL_ID, titleText, NotificationManager.IMPORTANCE_DEFAULT)
+        val notificationChannel = NotificationChannel(
+            NOTIFICATION_CHANNEL_ID, titleText, NotificationManager.IMPORTANCE_DEFAULT)
 
-            // Adds NotificationChannel to system. Attempting to create an
-            // existing notification channel with its original values performs
-            // no operation, so it's safe to perform the below sequence.
-            notificationManager.createNotificationChannel(notificationChannel)
-        }
+        // Adds NotificationChannel to system. Attempting to create an
+        // existing notification channel with its original values performs
+        // no operation, so it's safe to perform the below sequence.
+        notificationManager.createNotificationChannel(notificationChannel)
 
         // 2. Build the BIG_TEXT_STYLE.
         val bigTextStyle = NotificationCompat.BigTextStyle()
