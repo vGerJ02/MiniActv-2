@@ -19,18 +19,16 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.location.Location
 import android.os.Binder
-import android.os.Build
 import android.os.IBinder
 import android.os.Looper
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.lifecycle.LifecycleService
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -46,7 +44,7 @@ import java.util.concurrent.TimeUnit
  * For apps running in the background on O+ devices, location is computed much less than previous
  * versions. Please reference documentation for details.
  */
-class ForegroundOnlyLocationService : Service() {
+class ForegroundOnlyLocationService : LifecycleService() {
     /*
      * Checks whether the bound activity has really gone away (foreground service with notification
      * created) or simply orientation change (no-op).
@@ -76,6 +74,7 @@ class ForegroundOnlyLocationService : Service() {
     private var currentLocation: Location? = null
 
     override fun onCreate() {
+        super.onCreate()
         Log.d(TAG, "onCreate()")
 
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -84,11 +83,22 @@ class ForegroundOnlyLocationService : Service() {
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
 
         // TODO: Step 1.3, Create a LocationRequest.
-        locationRequest = LocationRequest.Builder(TimeUnit.SECONDS.toMillis(60)).build()  // interval
+        /*
+        locationRequest = LocationRequestCompat.Builder(TimeUnit.SECONDS.toMillis(60)).   // interval
+            setMinUpdateIntervalMillis(TimeUnit.SECONDS.toMillis(30)).                    // fastestInterval
+            setQuality(LocationRequestCompat.QUALITY_HIGH_ACCURACY).build()             // priority
 
-        locationRequest.isWaitForAccurateLocation = true
-        locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        locationRequest.fastestInterval = TimeUnit.SECONDS.toMillis(30)
+            isWaitForAccurateLocation = true
+            quality = LocationRequestCompat.QUALITY_HIGH_ACCURACY
+            minUpdateIntervalMillis = TimeUnit.SECONDS.toMillis(30)
+         */
+
+        locationRequest = LocationRequest.create().apply {
+            interval = TimeUnit.SECONDS.toMillis(60)
+            fastestInterval = TimeUnit.SECONDS.toMillis(30)
+            maxWaitTime = TimeUnit.MINUTES.toMillis(2)
+            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        }
 
 
         /*{
@@ -132,7 +142,7 @@ class ForegroundOnlyLocationService : Service() {
                 // learning the location side of things.
                 val intent = Intent(ACTION_FOREGROUND_ONLY_LOCATION_BROADCAST)
                 intent.putExtra(EXTRA_LOCATION, currentLocation)
-                LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(intent)
+                sendBroadcast(intent)
 
                 // Updates notification content if this service is running as a foreground
                 // service.
@@ -145,13 +155,14 @@ class ForegroundOnlyLocationService : Service() {
         }
     }
 
-    override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        super.onStartCommand(intent, flags, startId)
         Log.d(TAG, "onStartCommand()")
 
         val cancelLocationTrackingFromNotification =
-            intent.getBooleanExtra(EXTRA_CANCEL_LOCATION_TRACKING_FROM_NOTIFICATION, false)
+            intent?.getBooleanExtra(EXTRA_CANCEL_LOCATION_TRACKING_FROM_NOTIFICATION, false)
 
-        if (cancelLocationTrackingFromNotification) {
+        if (cancelLocationTrackingFromNotification == true) {
             unsubscribeToLocationUpdates()
             stopSelf()
         }
@@ -160,11 +171,12 @@ class ForegroundOnlyLocationService : Service() {
     }
 
     override fun onBind(intent: Intent): IBinder {
+        super.onBind(intent)
         Log.d(TAG, "onBind()")
 
         // MainActivity (client) comes into foreground and binds to service, so the service can
         // become a background services.
-        stopForeground(STOP_FOREGROUND_REMOVE)  // CONSULTAR QUINA CONSTANT CONVE MES.....
+        stopForeground(STOP_FOREGROUND_REMOVE)  // if supplied, the notification previously supplied to startForeground(int, Notification) will be cancelled and removed
         serviceRunningInForeground = false
         configurationChange = false
         return localBinder
@@ -200,6 +212,7 @@ class ForegroundOnlyLocationService : Service() {
     }
 
     override fun onDestroy() {
+        super.onDestroy()
         Log.d(TAG, "onDestroy()")
     }
 
@@ -291,7 +304,7 @@ class ForegroundOnlyLocationService : Service() {
             this, 0, cancelIntent, PendingIntent.FLAG_IMMUTABLE)
 
         val activityPendingIntent = PendingIntent.getActivity(
-            this, 0, launchActivityIntent, 0)
+            this, 0, launchActivityIntent, PendingIntent.FLAG_IMMUTABLE)
 
         // 4. Build and issue the notification.
         // Notification Channel Id is ignored for Android pre O (26).
