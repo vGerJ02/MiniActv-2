@@ -34,6 +34,7 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import java.util.concurrent.TimeUnit
 
 /**
@@ -93,15 +94,21 @@ class ForegroundOnlyLocationService : LifecycleService() {
             minUpdateIntervalMillis = TimeUnit.SECONDS.toMillis(30)
          */
 
-        locationRequest = LocationRequest.create().apply {
+        locationRequest = LocationRequest.Builder(FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS)
+            .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+            .setWaitForAccurateLocation(false)
+            .setMinUpdateIntervalMillis(FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS)
+            .setMaxUpdateDelayMillis(UPDATE_INTERVAL_IN_MILLISECONDS)
+            .build()
+
+            /*   Corresponding properties; Market as deprecated
+            LocationRequest.create().apply {
             interval = TimeUnit.SECONDS.toMillis(60)
             fastestInterval = TimeUnit.SECONDS.toMillis(30)
             maxWaitTime = TimeUnit.MINUTES.toMillis(2)
             priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        }
 
-
-        /*{
+        {
             // Sets the desired interval for active location updates. This interval is inexact. You
             // may not receive updates at all if no location sources are available, or you may
             // receive them less frequently than requested. You may also receive updates more
@@ -122,7 +129,6 @@ class ForegroundOnlyLocationService : LifecycleService() {
             maxWaitTime = TimeUnit.MINUTES.toMillis(2)
 
             priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-
          */
 
 
@@ -356,5 +362,10 @@ class ForegroundOnlyLocationService : LifecycleService() {
         private const val NOTIFICATION_ID = 12345678
 
         private const val NOTIFICATION_CHANNEL_ID = "while_in_use_channel_01"
+
+        private const val UPDATE_INTERVAL_IN_MILLISECONDS: Long = 100  // 10000
+
+        private const val FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
+            UPDATE_INTERVAL_IN_MILLISECONDS / 2
     }
 }
