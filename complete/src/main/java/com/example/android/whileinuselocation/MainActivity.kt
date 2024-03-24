@@ -297,9 +297,14 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
     private inner class ForegroundOnlyBroadcastReceiver : BroadcastReceiver() {
 
         override fun onReceive(context: Context, intent: Intent) {
-            val location = intent.getParcelableExtra<Location>(
-                ForegroundOnlyLocationService.EXTRA_LOCATION
-            )
+            // getParcelableExtra(String) is deprecated, use getParcelableExtra(String, Class) if > 33
+            val location = if (Build.VERSION.SDK_INT >= 33) {
+                intent.getParcelableExtra<Location>(
+                    ForegroundOnlyLocationService.EXTRA_LOCATION, Location::class.java
+                )
+            } else {
+                intent.getParcelableExtra<Location>(ForegroundOnlyLocationService.EXTRA_LOCATION)
+            }
 
             if (location != null) {
                 logResultsToScreen("Foreground location: ${location.toText()}")
