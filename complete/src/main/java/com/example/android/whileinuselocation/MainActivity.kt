@@ -36,6 +36,9 @@ import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
+import com.example.android.whileinuselocation.UI.ForegroundLocationViewModel
 import com.google.android.material.snackbar.Snackbar
 
 private const val TAG = "MainActivity"
@@ -97,6 +100,8 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
 
     private lateinit var outputTextView: TextView
 
+    private lateinit var foreLocationViewModel: ForegroundLocationViewModel
+
     // Monitors connection to the while-in-use service.
     private val foregroundOnlyServiceConnection = object : ServiceConnection {
 
@@ -117,6 +122,8 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
 
         setContentView(R.layout.activity_main)
 
+        foreLocationViewModel = ViewModelProvider(this)[ForegroundLocationViewModel::class.java]
+
         foregroundOnlyBroadcastReceiver = ForegroundOnlyBroadcastReceiver()
 
         sharedPreferences =
@@ -126,21 +133,25 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
         outputTextView = findViewById(R.id.output_text_view)
 
         foregroundOnlyLocationButton.setOnClickListener {
-            val enabled = sharedPreferences.getBoolean(
-                SharedPreferenceUtil.KEY_FOREGROUND_ENABLED, false)
-
-            if (enabled) {
-                foregroundOnlyLocationService?.unsubscribeToLocationUpdates()
-            } else {
-                // TODO: Step 1.0, Review Permissions: Checks and requests if needed.
-                if (foregroundPermissionApproved()) {
-                    foregroundOnlyLocationService?.subscribeToLocationUpdates()
-                        ?: Log.d(TAG, "Service Not Bound")
-                } else {
-                    requestForegroundPermissions()
-                }
-            }
+            foreLocationViewModel.onForegroundLocationButtonClick(sharedPreferences, foregroundOnlyLocationService)
+//            val enabled = sharedPreferences.getBoolean(
+//                SharedPreferenceUtil.KEY_FOREGROUND_ENABLED, false)
+//
+//            if (enabled) {
+//                foregroundOnlyLocationService?.unsubscribeToLocationUpdates()
+//            } else {
+//                // TODO: Step 1.0, Review Permissions: Checks and requests if needed.
+//                if (foregroundPermissionApproved()) {
+//                    foregroundOnlyLocationService?.subscribeToLocationUpdates()
+//                        ?: Log.d(TAG, "Service Not Bound")
+//                } else {
+//                    requestForegroundPermissions()
+//                }
+//            }
         }
+        foreLocationViewModel.foregroundLocationEnabled.observe(this, Observer { isEnabled ->
+            // Update UI based on whether foreground location is enabled or not
+        })
     }
 
     override fun onStart() {
@@ -293,6 +304,8 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
 
     /**
      * Receiver for location broadcasts from [ForegroundOnlyLocationService].
+     *
+     * Don't move to viewmodel
      */
     private inner class ForegroundOnlyBroadcastReceiver : BroadcastReceiver() {
 
