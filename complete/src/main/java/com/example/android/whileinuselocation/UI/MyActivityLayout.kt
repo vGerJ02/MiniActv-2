@@ -1,7 +1,7 @@
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
-//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.*
-import androidx.compose.material3.Button
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -9,8 +9,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-//noinspection UsingMaterialAndMaterial3Libraries
-import androidx.compose.material.Text
 
 @Composable
 fun MyActivityLayout(
@@ -41,4 +39,22 @@ fun MyActivityLayout(
             overflow = TextOverflow.Ellipsis
         )
     }
+}
+
+@Preview
+@Composable //to create a preview of a composable create a new composable 
+fun PreviewMyActivityLayout() {
+    MyActivityLayout(
+        onStartLocationUpdatesClick = {},
+        outputText = "Sample output text for preview"
+    )
+}
+
+@Preview
+@Composable
+fun PreviewMyActivityLayoutDark() {
+    MyActivityLayout(
+        onStartLocationUpdatesClick = {},
+        outputText = "Sample output text for preview in dark mode"
+    )
 }
