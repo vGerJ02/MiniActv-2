@@ -1,56 +1,60 @@
 package com.example.android.whileinuselocation.UI
 
-import android.Manifest
-import android.content.SharedPreferences
-import android.content.pm.PackageManager
-import android.util.Log
-import androidx.core.app.ActivityCompat
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.example.android.whileinuselocation.ForegroundOnlyLocationService
-import com.example.android.whileinuselocation.SharedPreferenceUtil
 
-private const val TAG = "MainActivity"
-class ForegroundLocationViewModel: ViewModel() {
+class ForegroundLocationViewModel : ViewModel() {
+    private val _buttonText = MutableLiveData("Start Location Updates")
+    val buttonText: LiveData<String> = _buttonText
 
+    private val _outputText = MutableLiveData<String>("")
+    val outputText: LiveData<String> = _outputText
 
-    private val _foregroundLocationEnabled = MutableLiveData<Boolean>()
-    val foregroundLocationEnabled: LiveData<Boolean>
-        get() = _foregroundLocationEnabled
-
-    fun onForegroundLocationButtonClick(sharedPreferences: SharedPreferences, foregroundOnlyLocationService: ForegroundOnlyLocationService?) {
-        val enabled = sharedPreferences.getBoolean(SharedPreferenceUtil.KEY_FOREGROUND_ENABLED, false)
-
-        if (enabled) {
-            foregroundOnlyLocationService?.unsubscribeToLocationUpdates()
-            _foregroundLocationEnabled.value = false
-        } else {
-            if (foregroundPermissionApproved()) {
-                foregroundOnlyLocationService?.subscribeToLocationUpdates()
-                    ?: Log.d(TAG, "Service Not Bound")
-                _foregroundLocationEnabled.value = true
-            } else {
-                requestForegroundPermissions()
-            }
-        }
-    }
-
-    private fun foregroundPermissionApproved(): Boolean {
-        // Implement your permission check logic here
-        return true
-    }
-
-    private fun requestForegroundPermissions() {
-        // Implement your permission request logic here
+    fun setButtonText(text: String) {
+        _buttonText.value = text
     }
 
 
-    enum class PermissionStatus {
-        UNKNOWN, GRANTED, DENIED
+    fun appendToOutputText(newText: String) {
+        _outputText.value = "${_outputText.value}$newText\n"
     }
 
-    enum class ServiceBindingStatus {
-        BOUND, UNBOUND
+    private val _snackbarMessage = MutableLiveData(false)
+    val snackbarMessage: LiveData<Boolean> = _snackbarMessage
+
+    fun showSnackbar(state: Boolean) {
+        _snackbarMessage.value = state
     }
+
+
+    private val _showSnackbar = MutableLiveData<Boolean>()
+    private val _snackbarText = MutableLiveData<String>()
+    private val _snackbarActionLabel = MutableLiveData<String>()
+    val showSnackbar: LiveData<Boolean> = _showSnackbar
+    val snackbarText: LiveData<String> = _snackbarText
+    val snackbarActionLabel: LiveData<String> = _snackbarActionLabel
+    var action = {}
+    var dismissed = {}
+
+    fun triggerSnackbar(
+        text: String,
+        actionLabel: String,
+        onActionPerformed: () -> Unit = {},
+        onDismissed: () -> Unit = {}
+    ) {
+        _snackbarText.value = text
+        _snackbarActionLabel.value = actionLabel
+        action = onActionPerformed
+        dismissed = onDismissed
+        _showSnackbar.value = true
+    }
+
+    fun resetSnackbar() {
+        action = {}
+        dismissed = {}
+        _showSnackbar.value = false
+    }
+
 }

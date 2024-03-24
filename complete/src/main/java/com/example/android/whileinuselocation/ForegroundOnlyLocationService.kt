@@ -35,7 +35,6 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
-import java.util.concurrent.TimeUnit
 
 /**
  * Service tracks location when requested and updates Activity via binding. If Activity is
@@ -101,35 +100,35 @@ class ForegroundOnlyLocationService : LifecycleService() {
             .setMaxUpdateDelayMillis(UPDATE_INTERVAL_IN_MILLISECONDS)
             .build()
 
-            /*   Corresponding properties; Market as deprecated
-            LocationRequest.create().apply {
-            interval = TimeUnit.SECONDS.toMillis(60)
-            fastestInterval = TimeUnit.SECONDS.toMillis(30)
-            maxWaitTime = TimeUnit.MINUTES.toMillis(2)
-            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        /*   Corresponding properties; Market as deprecated
+        LocationRequest.create().apply {
+        interval = TimeUnit.SECONDS.toMillis(60)
+        fastestInterval = TimeUnit.SECONDS.toMillis(30)
+        maxWaitTime = TimeUnit.MINUTES.toMillis(2)
+        priority = LocationRequest.PRIORITY_HIGH_ACCURACY
 
-        {
-            // Sets the desired interval for active location updates. This interval is inexact. You
-            // may not receive updates at all if no location sources are available, or you may
-            // receive them less frequently than requested. You may also receive updates more
-            // frequently than requested if other applications are requesting location at a more
-            // frequent interval.
-            //
-            // IMPORTANT NOTE: Apps running on Android 8.0 and higher devices (regardless of
-            // targetSdkVersion) may receive updates less frequently than this interval when the app
-            // is no longer in the foreground.
-            interval = TimeUnit.SECONDS.toMillis(60)
+    {
+        // Sets the desired interval for active location updates. This interval is inexact. You
+        // may not receive updates at all if no location sources are available, or you may
+        // receive them less frequently than requested. You may also receive updates more
+        // frequently than requested if other applications are requesting location at a more
+        // frequent interval.
+        //
+        // IMPORTANT NOTE: Apps running on Android 8.0 and higher devices (regardless of
+        // targetSdkVersion) may receive updates less frequently than this interval when the app
+        // is no longer in the foreground.
+        interval = TimeUnit.SECONDS.toMillis(60)
 
-            // Sets the fastest rate for active location updates. This interval is exact, and your
-            // application will never receive updates more frequently than this value.
-            fastestInterval = TimeUnit.SECONDS.toMillis(30)
+        // Sets the fastest rate for active location updates. This interval is exact, and your
+        // application will never receive updates more frequently than this value.
+        fastestInterval = TimeUnit.SECONDS.toMillis(30)
 
-            // Sets the maximum time when batched location updates are delivered. Updates may be
-            // delivered sooner than this interval.
-            maxWaitTime = TimeUnit.MINUTES.toMillis(2)
+        // Sets the maximum time when batched location updates are delivered. Updates may be
+        // delivered sooner than this interval.
+        maxWaitTime = TimeUnit.MINUTES.toMillis(2)
 
-            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-         */
+        priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+     */
 
 
         // TODO: Step 1.4, Initialize the LocationCallback.
@@ -155,7 +154,8 @@ class ForegroundOnlyLocationService : LifecycleService() {
                 if (serviceRunningInForeground) {
                     notificationManager.notify(
                         NOTIFICATION_ID,
-                        generateNotification(currentLocation))
+                        generateNotification(currentLocation)
+                    )
                 }
             }
         }
@@ -231,7 +231,6 @@ class ForegroundOnlyLocationService : LifecycleService() {
         Log.d(TAG, "subscribeToLocationUpdates()")
 
         SharedPreferenceUtil.saveLocationTrackingPref(this, true)
-
         // Binding to this service doesn't actually trigger onStartCommand(). That is needed to
         // ensure this Service can be promoted to a foreground service, i.e., the service needs to
         // be officially started (which we do here).
@@ -240,7 +239,8 @@ class ForegroundOnlyLocationService : LifecycleService() {
         try {
             // TODO: Step 1.5, Subscribe to location changes.
             fusedLocationProviderClient.requestLocationUpdates(
-                locationRequest, locationCallback, Looper.getMainLooper())
+                locationRequest, locationCallback, Looper.getMainLooper()
+            )
         } catch (unlikely: SecurityException) {
             SharedPreferenceUtil.saveLocationTrackingPref(this, false)
             Log.e(TAG, "Lost location permissions. Couldn't remove updates. $unlikely")
@@ -288,7 +288,8 @@ class ForegroundOnlyLocationService : LifecycleService() {
         // 1. Create Notification Channel for O+ and beyond devices (26+).
 
         val notificationChannel = NotificationChannel(
-            NOTIFICATION_CHANNEL_ID, titleText, NotificationManager.IMPORTANCE_DEFAULT)
+            NOTIFICATION_CHANNEL_ID, titleText, NotificationManager.IMPORTANCE_DEFAULT
+        )
 
         // Adds NotificationChannel to system. Attempting to create an
         // existing notification channel with its original values performs
@@ -307,10 +308,12 @@ class ForegroundOnlyLocationService : LifecycleService() {
         cancelIntent.putExtra(EXTRA_CANCEL_LOCATION_TRACKING_FROM_NOTIFICATION, true)
 
         val servicePendingIntent = PendingIntent.getService(
-            this, 0, cancelIntent, PendingIntent.FLAG_IMMUTABLE)
+            this, 0, cancelIntent, PendingIntent.FLAG_IMMUTABLE
+        )
 
         val activityPendingIntent = PendingIntent.getActivity(
-            this, 0, launchActivityIntent, PendingIntent.FLAG_IMMUTABLE)
+            this, 0, launchActivityIntent, PendingIntent.FLAG_IMMUTABLE
+        )
 
         // 4. Build and issue the notification.
         // Notification Channel Id is ignored for Android pre O (26).
